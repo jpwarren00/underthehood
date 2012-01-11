@@ -10,4 +10,63 @@ function underthehood_init(){
 }
 
 //hook block
-function underthehood_block(){}
+function underthehood_block($op = 'list', $delta = 0, $edit = array()) {
+  switch( $op ) {
+    case 'list':
+      $blocks[0] = array(
+        'info' => t('PHP Server Variables'),
+        'weight' => 0,
+        'cache'  => BLOCK_NO_CACHE,
+      );
+      return $blocks;
+    case 'view':
+      switch( $delta ) {
+        case '0':
+          $block = array(
+            'subject' => 'Howdy',
+            'content' => grab_php_server_variables(),
+          );
+          return $block;
+      }
+  }
+}
+
+function grab_php_server_variables(){
+  $output = '';
+  $output .='<div id="debugging-block" class="debugging">';
+  $output .= '<div class="debugging-description">REDIRECT_STATUS</div>' . $_SERVER['REDIRECT_STATUS'] . '<br>';
+  $output .= '<div class="debugging-description">HOST</div>' . $_SERVER['HTTP_HOST']. '<br>';
+  $output .= '<div class="debugging-description">USER AGENT</div>' . $_SERVER['HTTP_USER_AGENT']. '<br>';
+  $output .= '<div class="debugging-description">ACCEPT</div>' . $_SERVER['HTTP_ACCEPT']. '<br>';
+  $output .= '<div class="debugging-description">LANGUAGE</div>' . $_SERVER['HTTP_ACCEPT_LANGUAGE']. '<br>';
+  $output .= '<div class="debugging-description">ENCODING</div>' . $_SERVER['HTTP_ACCEPT_ENCODING']. '<br>';
+  $output .= '<div class="debugging-description">CHARSET</div>' . $_SERVER['HTTP_ACCEPT_CHARSET']. '<br>';
+  $output .= '<div class="debugging-description">KEEP ALIVE</div>' . $_SERVER['HTTP_KEEP_ALIVE']. '<br>';
+  $output .= '<div class="debugging-description">CONNECTION</div>' . $_SERVER['HTTP_CONNECTION']. '<br>';
+  $output .= '<div class="debugging-description">REFERER</div>' . $_SERVER['HTTP_REFERER']. '<br>';
+  $output .= '<div class="debugging-description">COOKIE</div>' . $_SERVER['HTTP_COOKIE']. '<br>';
+  $output .= '<div class="debugging-description">PATH</div>' . $_SERVER['PATH']. '<br>';
+  $output .= '<div class="debugging-description">SIGNATURE</div>' . $_SERVER['SERVER_SIGNATURE']. '<br>';
+  $output .= '<div class="debugging-description">SERVER SOFTWARE</div>' . $_SERVER['SERVER_SOFTWARE']. '<br>';
+  $output .= '<div class="debugging-description">SERVER NAME</div>' . $_SERVER['SERVER_NAME']. '<br>';
+  $output .= '<div class="debugging-description">SERVER ADDRESS</div>' . $_SERVER['SERVER_ADDR']. '<br>';
+  $output .= '<div class="debugging-description">SERVER PORT</div>' . $_SERVER['SERVER_PORT']. '<br>';
+  $output .= '<div class="debugging-description">REMOTE ADDRESS</div>' . $_SERVER['REMOTE_ADDR']. '<br>';
+  $output .= '<div class="debugging-description">DOCUMENT ROOT</div>' . $_SERVER['DOCUMENT_ROOT']. '<br>';
+  $output .= '<div class="debugging-description">SERVER ADMIN</div>' . $_SERVER['SERVER_ADMIN']. '<br>';
+  $output .= '<div class="debugging-description">SCRIPT FILENAME</div>' . $_SERVER['SCRIPT_FILENAME']. '<br>';
+  $output .= '<div class="debugging-description">REMOTE PORT</div>' . $_SERVER['REMOTE_PORT']. '<br>';
+  $output .= '<div class="debugging-description">REDIRECT QUERY</div>' . $_SERVER['REDIRECT_QUERY_STRING']. '<br>';
+  $output .= '<div class="debugging-description">REDIRECT URL</div>' . $_SERVER['REDIRECT_URL']. '<br>';
+  $output .= '<div class="debugging-description">GATEWAY INTERFACE</div>' . $_SERVER['GATEWAY_INTERFACE']. '<br>';
+  $output .= '<div class="debugging-description">SERVER PROTOCOL</div>' . $_SERVER['SERVER_PROTOCOL']. '<br>';
+  $output .= '<div class="debugging-description">REQUEST METHOD</div>' . $_SERVER['REQUEST_METHOD']. '<br>';
+  $output .= '<div class="debugging-description">QUERY STRING</div>' . $_SERVER['QUERY_STRING']. '<br>';
+  $output .= '<div class="debugging-description">REQUEST URI</div>' . $_SERVER['REQUEST_URI']. '<br>';
+  $output .= '<div class="debugging-description">SCRIPT NAME</div>' . $_SERVER['SCRIPT_NAME']. '<br>';
+  $output .= '<div class="debugging-description">PHP SELF</div>' . $_SERVER['PHP_SELF']. '<br>';
+  $output .= '<div class="debugging-description">REQUEST TIME</div>' . $_SERVER['REQUEST_TIME']. '<br>';
+  $output .= '<div class="debugging-description">ARGV</div>' . serialize($_SERVER['argv']). '<br>';
+  $output .= '<div class="debugging-description">ARGC</div>' . $_SERVER['argc']. '<br>';
+  return $output;
+}
