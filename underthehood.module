@@ -1,0 +1,13 @@
+<?php
+//$Id$
+/**
+  * A simple module for common debugging tasks
+  */
+
+//Some debugging css
+function underthehood_init(){
+    drupal_add_css( drupal_get_path( 'module', 'underthehood' ) . '/underthehood.css');
+}
+
+//hook block
+function underthehood_block(){}

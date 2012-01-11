@@ -1,0 +1,11 @@
+.debugging{
+  font-family: Courier;
+  background-color: #AAAAAA;
+  border: solid #333333 2px;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  border-radius: 6px;
+}
+#debugging-block{
+  
+}
