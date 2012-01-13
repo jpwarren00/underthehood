@@ -18,17 +18,55 @@ function underthehood_block($op = 'list', $delta = 0, $edit = array()) {
         'weight' => 0,
         'cache'  => BLOCK_NO_CACHE,
       );
+      $blocks[1] = array(
+        'info' => t('Variable Editor'),
+        'weight' => 1,
+        'cache' => BLOCK_NO_CACHE,
+      );
       return $blocks;
     case 'view':
       switch( $delta ) {
         case '0':
           $block = array(
-            'subject' => 'Howdy',
+            'subject' => t('PHP SERVER VARIABLES'),
             'content' => grab_php_server_variables(),
+          );
+          return $block;
+        case '1':
+          $block = array(
+            'subject' => t('Drupal Variables'),
+            'content' => drupal_get_form('variable_editor_form'),
           );
           return $block;
       }
   }
+}
+
+function variable_editor_form(){
+  $sql = "SELECT name,value FROM {variable}";
+  $query = db_query($sql);
+  while($data = db_fetch_array($query)){
+    $variables[] = $data;
+  }
+  $form = array();
+  foreach($variables as $variable){
+    $form[$variable['name']] = array(
+      '#type' => 'textarea',
+      '#title' => t('Variable Name: "') . $variable['name'] . '"',
+      '#default_value' => $variable['value'],
+      '#rows' => 1
+    );
+  }
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save New Variables'),
+  );
+  return $form;
+}
+function variable_editor_form_validate($form, &$form_state){}
+function variable_editor_form_submit($form, &$form_state){
+  var_dump($form);
+  die;
 }
 
 function grab_php_server_variables(){
