@@ -15,8 +15,18 @@ function underthehood_menu(){
     'access arguments' => array('administer underthehood'),
     'type' => MENU_NORMAL_ITEM,
   );
-  $items['admin/settings/underthehood/alternate_db_setup'] = array();
+  $items['admin/gotcha'] = array(
+    'title' => t('Your form data'),
+    'page callback' => 'show_me_the_form_post',
+    'access arguments' => TRUE,
+    'type' => MENU_NORMAL_ITEM,
+  );
+  //$items['admin/settings/underthehood/alternate_db_setup'] = array();
   return $items;
+}
+
+function underthehood_perm(){
+  return array('administer underthehood');
 }
 
 function underthehood_admin_form(){
@@ -27,6 +37,7 @@ function underthehood_admin_form(){
 //Some debugging css
 function underthehood_init(){
     drupal_add_css( drupal_get_path( 'module', 'underthehood' ) . '/underthehood.css');
+    drupal_add_js( drupal_get_path( 'module', 'underthehood' ) . '/underthehood.js');
 }
 
 //hook block
@@ -35,17 +46,22 @@ function underthehood_block($op = 'list', $delta = 0, $edit = array()) {
     case 'list':
       $blocks[0] = array(
         'info' => t('PHP Server Variables'),
-        'weight' => 0,
+        'weight' => -999,
         'cache'  => BLOCK_NO_CACHE,
       );
       $blocks[1] = array(
         'info' => t('Variable Editor'),
-        'weight' => 1,
+        'weight' => -998,
         'cache' => BLOCK_NO_CACHE,
       );
       $blocks[2] = array(
         'info' => t('PHP Session Variables'),
-        'weight' => 2,
+        'weight' => -997,
+        'cache' => BLOCK_NO_CACHE,
+      );
+      $blocks[3] = array(
+        'info' => t('Form POST Data Inspector'),
+        'weight' => -996,
         'cache' => BLOCK_NO_CACHE,
       );
       return $blocks;
@@ -69,15 +85,32 @@ function underthehood_block($op = 'list', $delta = 0, $edit = array()) {
             'content' => formatted_session_data(),
           );
           return $block;
+        case '3':
+          $block = array(
+            'subject' => t('Hijack form POST data'),
+            'content' => '<button id="gotcha-button" class="debugging button">GOTCHA</button>',
+          );
+          return $block;
       }
   }
 }
 
+// This function displays the current POST data
+function show_me_the_form_post($ops = array()){
+  (!empty($_POST)) ? $output = prettify_array($_POST) : $output = '<div class="debugging">So sorry, no POST data today.</div>';
+  return $output;
+}
+
 //The PHP session data nicely formatted for easy reading
 function formatted_session_data(){
-  $session = $_SESSION;
+  $output = prettify_array($_SESSION);
+  return $output;
+}
+
+//Prettify's the array
+function prettify_array($array = array()){
   $output = '<div id="debugging-block" class="debugging">';
-  foreach($session as $key => $value){
+  foreach($array as $key => $value){
     if(is_array($value)){
       foreach($value as $sub_key => $sub_value){
         if(is_array($sub_value)){
