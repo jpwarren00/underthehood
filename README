@@ -1,0 +1,17 @@
+UNDER THE HOOD
+--------------
+
+This is a Drupal 6/7 module for developers and designers, it encompasses some
+tools I seem to recreate fairly often when working on Drupal sites.  Here is a
+list of the tools and what I've used them for:
+
+* Server Inspector Block
+  - A block which shows the PHP server variables in an easier to read manner.
+* Session Inspector Block
+  - Another block that shows the PHP session variables.
+* Drupal Variables Editing Block
+  - This block shows the serialized drupal variables, the serialized versions
+    can be edited and saved back into the variables table.
+* Form POST Inspector
+  - This block contains a button that redirects all forms on a page to an
+    internal page that displays the data as a prettified array.
