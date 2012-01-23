@@ -33,7 +33,16 @@ function underthehood_admin_form(){
   $form = array();
   return system_settings_form($form);
 }
-  
+
+function view_explorer(){
+ $data = views_embed_view('clep_products', 'Students');
+ $output = prettify_array($data);
+ if(empty($output)){
+  return(random_error_message('empty'));
+ } else {
+  return($output);
+ }
+}
 //Some debugging css
 function underthehood_init(){
     drupal_add_css( drupal_get_path( 'module', 'underthehood' ) . '/underthehood.css');
@@ -102,13 +111,13 @@ function underthehood_block($op = 'list', $delta = 0, $edit = array()) {
  * forms over to Drupal forms API forms easier for you.
  */ 
 function show_me_the_form_post(){
-  (!empty($_POST)) ? $output = prettify_array($_POST) : $output = '<div class="debugging">So sorry, no POST data today.</div>';
+  (!empty($_POST)) ? $output = prettify_array($_POST) : $output = random_error_message('empty');
   return $output;
 }
 
 //The PHP session data nicely formatted for easy reading
 function formatted_session_data(){
-  (!empty($_SESSION)) ? $output = prettify_array($_SESSION): $output = '<div class="debugging">So sorry, no POST data today.</div>';
+  (!empty($_SESSION)) ? $output = prettify_array($_SESSION): $output = random_error_message('empty');
   return $output;
 }
 //PHP server variables
@@ -176,7 +185,20 @@ function variable_editor_form_submit($form, &$form_state){
   }
 }
 
-
+//Just to keep your mood up.
+function random_error_message($op){
+  
+  switch($op){
+    case 'empty':
+      $dice_roll = rand(0,2);
+      $empty_messages = array(
+        '<div class="debugging">So sorry, no POST data today.</div>',
+        '<div class="debugging">I thought it was around here somewhere...</div>',
+        '<div class="debugging">No luck for you.</div>',
+      );
+      return($empty_messages[$dice_roll]);
+  }
+}
 
 /**
  * Content diff
