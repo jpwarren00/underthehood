@@ -176,7 +176,20 @@ function variable_editor_form_submit($form, &$form_state){
   }
 }
 
-
+//Just to keep your mood up.
+function random_error_message($op){
+  
+  switch($op){
+    case 'empty':
+      $dice_roll = rand(0,2);
+      $empty_messages = array(
+        '<div class="debugging">So sorry, no POST data today.</div>',
+        '<div class="debugging">I thought it was around here somewhere...</div>',
+        '<div class="debugging">No luck for you.</div>',
+      );
+      return($empty_messages[$dice_roll]);
+  }
+}
 
 /**
  * Content diff
