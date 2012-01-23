@@ -102,15 +102,16 @@ function underthehood_block($op = 'list', $delta = 0, $edit = array()) {
  * forms over to Drupal forms API forms easier for you.
  */ 
 function show_me_the_form_post(){
-  (!empty($_POST)) ? $output = prettify_array($_POST) : $output = '<div class="debugging">So sorry, no POST data today.</div>';
+  (!empty($_POST)) ? $output = prettify_array($_POST) : $output = random_error_message('empty');
   return $output;
 }
 
 //The PHP session data nicely formatted for easy reading
 function formatted_session_data(){
-  (!empty($_SESSION)) ? $output = prettify_array($_SESSION): $output = '<div class="debugging">So sorry, no POST data today.</div>';
+  (!empty($_SESSION)) ? $output = prettify_array($_SESSION): $output = random_error_message('empty');
   return $output;
 }
+
 //PHP server variables
 function grab_php_server_variables(){
   $output = prettify_array($_SERVER);
