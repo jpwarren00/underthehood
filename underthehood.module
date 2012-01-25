@@ -4,34 +4,41 @@
   * A simple module for common debugging tasks
   */
 
+  
+// Hook menu
 function underthehood_menu(){
-  $items = array();
-
-  $items['admin/settings/underthehood'] = array(
+  $items['admin/config/underthehood'] = array(
     'title' => t('Under the hood settings'),
     'description' => 'An admin thingy',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('underthehood_admin_form'),
+    'access callback' => 'user_access',
     'access arguments' => array('administer underthehood'),
     'type' => MENU_NORMAL_ITEM,
   );
-  $items['admin/gotcha'] = array(
+  $items['gotcha'] = array(
     'title' => t('Your form data'),
     'page callback' => 'show_me_the_form_post',
-    'access arguments' => TRUE,
+    'access callback' => TRUE,
     'type' => MENU_NORMAL_ITEM,
   );
-  $items['admin/grab-watchdog'] = array(
+  $items['grab-watchdog'] = array(
     'page callback' => 'grab_current_watchdog',
-    'access arguments' => TRUE,
+    'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
   //$items['admin/settings/underthehood/alternate_db_setup'] = array();
   return $items;
 }
 
-function underthehood_perm(){
-  return array('administer underthehood');
+// Hook perm
+function underthehood_permission(){
+  return  array(
+            'administer underthehood' => array(
+              'title' => t('Administer Under the Hood'),
+              'description' => t('Turn tools on and off.'),
+            )
+          );
 }
 
 //a:4:{s:13:"form_hijacker";s:13:"form_hijacker";s:11:"server_vars";i:0;s:11:"drupal_vars";i:0;s:12:"session_vars";i:0;}
@@ -65,103 +72,104 @@ function underthehood_init(){
   }
 }
 
-//hook block
-function underthehood_block($op = 'list', $delta = 0, $edit = array()) {
+function underthehood_block_info(){
+  $blocks = array();
   $underthehood_active_tools = variable_get('underthehood_active_tools', array('server_vars' => '', 'drupal_vars' => '', 'session_vars' => '', 'form_hijacker' => '','watchdog_by_page' => '',));
-  switch( $op ) {
-    case 'list':
-      if($underthehood_active_tools['server_vars'] == 'server_vars'){
-        $blocks[0] = array(
-          'info' => t('PHP Server Variables'),
-          'weight' => -999,
-          'cache'  => BLOCK_NO_CACHE,
-        );
-      }
-      if($underthehood_active_tools['drupal_vars'] == 'drupal_vars'){
-        $blocks[1] = array(
-          'info' => t('Variable Editor'),
-          'weight' => -998,
-          'cache' => BLOCK_NO_CACHE,
-        );
-      }
-      if($underthehood_active_tools['session_vars'] == 'session_vars'){
-        $blocks[2] = array(
-          'info' => t('PHP Session Variables'),
-          'weight' => -997,
-          'cache' => BLOCK_NO_CACHE,
-        );
-      }
-      if($underthehood_active_tools['form_hijacker'] == 'form_hijacker'){
-        $blocks[3] = array(
-          'info' => t('Form POST Data Inspector'),
-          'weight' => -996,
-          'cache' => BLOCK_NO_CACHE,
-        );
-      }
-      if($underthehood_active_tools['watchdog_by_page'] == 'watchdog_by_page'){
-        $blocks[4] = array(
-          'info' => t('Watchdog Messages per Page'),
-          'weight' => -995,
-          'cache' => BLOCK_NO_CACHE,
-        );
-      }
-      return $blocks;
-    case 'view':
-      switch( $delta ) {
-        case '0':
-          $block = array(
-            'subject' => t('PHP SERVER VARIABLES'),
-            'content' => grab_php_server_variables(),
-          );
-          return $block;
-        case '1':
-          $block = array(
-            'subject' => t('Drupal Variables'),
-            'content' => drupal_get_form('variable_editor_form'),
-          );
-          return $block;
-        case '2':
-          $block = array(
-            'subject' => t('PHP Session Data'),
-            'content' => formatted_session_data(),
-          );
-          return $block;
-        case '3':
-          $block = array(  
-            'subject' => t('Hijack form POST data'),
-            'content' => '<button id="gotcha-button" class="debugging button">GOTCHA</button>',
-          );
-          return $block;
-        case '4':
-          $block = array(  
-            'subject' => t('Watchdog Messages for this Page'),
-            'content' => watchdog_by_page(),
-          );
-          return $block;
-      }
+  if($underthehood_active_tools['server_vars'] == 'server_vars'){
+    $blocks['server_vars'] = array(
+      'info' => t('PHP Server Variables'),
+      'status' => FALSE,
+      'weight' => -999,
+      'visibility' => 1,
+    );
+  }
+  if($underthehood_active_tools['drupal_vars'] == 'drupal_vars'){
+    $blocks['drupal_vars'] = array(
+      'info' => t('Variable Editor'),
+      'status' => FALSE,
+      'weight' => -998,
+      'visibility' => 1,
+    );
+  }
+  if($underthehood_active_tools['session_vars'] == 'session_vars'){
+    $blocks['session_vars'] = array(
+      'info' => t('PHP Session Variables'),
+      'status' => FALSE,
+      'weight' => -997,
+      'visibility' => 1,
+    );
+  }
+  if($underthehood_active_tools['form_hijacker'] == 'form_hijacker'){
+    $blocks['form_hijacker'] = array(
+      'info' => t('Form POST Data Inspector'),
+      'status' => FALSE,
+      'weight' => -996,
+      'visibility' => 1,
+    );
+  }
+  if($underthehood_active_tools['watchdog_by_page'] == 'watchdog_by_page'){
+    $blocks['watchdog_by_page'] = array(
+      'info' => t('Watchdog Messages per Page'),
+      'status' => FALSE,
+      'weight' => -995,
+      'visibility' => 1,
+    );
+  }
+  return $blocks;
+}
+function underthehood_block_view($delta = ''){
+  switch( $delta ) {
+    case 'server_vars':
+      $block = array(
+        'subject' => t('PHP SERVER VARIABLES'),
+        'content' => grab_php_server_variables(),
+      );
+      return $block;
+    case 'drupal_vars':
+      $block = array(
+        'subject' => t('Drupal Variables'),
+        'content' => drupal_get_form('variable_editor_form'),
+      );
+      return $block;
+    case 'session_vars':
+      $block = array(
+        'subject' => t('PHP Session Data'),
+        'content' => formatted_session_data(),
+      );
+      return $block;
+    case 'form_hijacker':
+      $block = array(  
+        'subject' => t('Hijack form POST data'),
+        'content' => '<button id="gotcha-button" class="debugging button">GOTCHA</button>',
+      );
+      return $block;
+    case 'watchdog_by_page':
+      $block['subject'] = t('Watchdog Messages for this Page');
+      $block['content'] = watchdog_by_page();
+      return $block;
   }
 }
+
 
 // Show the watchdog messages that occured during this page load
 // $("#watchdog-by-page-data").text("HOWDY");
 function watchdog_by_page(){
   $watchdog_script = '
-  console.log(Drupal.settings.underthehood.InitStartTime);
-  $(document).ready( function(){
-    $.ajax(
+  jQuery(document).ready( function(){
+    jQuery.ajax(
       {
         type : "POST",
-        url : "admin/grab-watchdog?InitStartTime=" + Drupal.settings.underthehood.InitStartTime,
+        url : "grab-watchdog?InitStartTime=" + Drupal.settings.underthehood.InitStartTime,
         success: function(data){
-          $("#watchdog-by-page-data").html(data);
+          jQuery("#watchdog-by-page-data").html(data);
         }
       }
     );
   });
   ';
-  drupal_add_js($watchdog_script, 'inline', 'footer');
+  drupal_add_js($watchdog_script, 'inline');//, 'footer');
   $output = '<div id="watchdog-by-page-data" class="debugging"></div>';
-  return $output;
+  return array('#markup' => $output);
 }
 
 function grab_current_watchdog(){
@@ -177,15 +185,22 @@ function grab_current_watchdog(){
     print(random_error_message('empty'));
     exit();
   }
-  $sql = 'SELECT timestamp,type,message,variables from {watchdog} WHERE timestamp >= %d';
-  $query_object = db_query($sql, $InitStartTime);
+  $sql = 'SELECT timestamp,type,message,variables from {watchdog} WHERE timestamp >= :timestamp';
+  $args = array(':timestamp' => $InitStartTime);
+  $query_object = db_query($sql, $args);
   $output = '<br><div class="watchdog-debugging-header type">Type</div><div class="watchdog-debugging-header message">Message</div><div id="watchdog-debugging-header-line"></div>';
-  while($data = db_fetch_array($query_object)){
-    $message = t($data['message'], unserialize($data['variables']));
-    $output .= '<div class="data-row type">' . $data['type'] . '</div><div class="data-row message">' . $message . '</div><br>';
+  $header = $output;
+  foreach($query_object as $row){
+    $message = t($row->message, unserialize($row->variables));
+    $output .= '<div class="data-row type">' . $row->type . '</div><div class="data-row message">' . $message . '</div><br>';
   }
-  print($output);
-  exit();
+  if($output === $header){
+    print(random_error_message('empty'));
+    exit();
+  } else {
+    print($output);
+    exit();
+  }
 }
 
 /**
@@ -276,8 +291,8 @@ function variable_editor_form(){
   //The query
   $sql = "SELECT name,value FROM {variable}";
   $query = db_query($sql);
-  while($data = db_fetch_array($query)){
-    $variables[] = $data;
+  foreach($query as $data){
+    $variables[] = (array)$data;
   }
   $form = array();
   //The generation loop
