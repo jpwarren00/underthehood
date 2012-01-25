@@ -12,3 +12,38 @@
 .debugging-key{
   font-weight: bolder;
 }
+.debugging-object{
+  font-weight: bolder;
+  color: blue;
+}
+.debugging-property{
+  text-decoration: underline;
+  color: green;
+}
+#watchdog-by-page-data .watchdog-debugging-header{
+  display: inline;
+  text-align: center;
+}
+#watchdog-debugging-header-line{
+  width: 100%;
+  border-bottom: 2px #FFFFFF solid;
+}
+#watchdog-by-page-data .watchdog-debugging-header.type{
+  margin-left: 1%;
+  margin-right: 5%;
+}
+#watchdog-by-page-data .watchdog-debugging-header.message{
+  margin-left: 20%;
+  margin-right: 20%;
+}
+#watchdog-by-page-data .data-row{
+  display: inline;
+}
+#watchdog-by-page-data .type{
+  min-width: 20%;
+  margin: 1%;
+}
+#watchdog-by-page-data .message{
+  min-width: 60%;
+  margin: 1%;
+}

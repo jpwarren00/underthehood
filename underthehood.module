@@ -21,6 +21,11 @@ function underthehood_menu(){
     'access arguments' => TRUE,
     'type' => MENU_NORMAL_ITEM,
   );
+  $items['admin/grab-watchdog'] = array(
+    'page callback' => 'grab_current_watchdog',
+    'access arguments' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
   //$items['admin/settings/underthehood/alternate_db_setup'] = array();
   return $items;
 }
@@ -29,41 +34,77 @@ function underthehood_perm(){
   return array('administer underthehood');
 }
 
+//a:4:{s:13:"form_hijacker";s:13:"form_hijacker";s:11:"server_vars";i:0;s:11:"drupal_vars";i:0;s:12:"session_vars";i:0;}
+//a:4:{s:12:"session_vars";s:12:"session_vars";s:13:"form_hijacker";s:13:"form_hijacker";s:11:"server_vars";i:0;s:11:"drupal_vars";i:0;}
 function underthehood_admin_form(){
   $form = array();
+  $active_tools_options = array(
+    'server_vars' => 'Server Variable Inspection Block',
+    'drupal_vars' => 'Drupal Variable Editor Block',
+    'session_vars' => 'Server Session Variables',
+    'form_hijacker' => 'Form POST Data Hijacker',
+    'watchdog_by_page' => 'Watchdog page by page inspector',
+  );
+  $form['underthehood']['underthehood_active_tools'] = array(
+    '#title' => 'Active Tools',
+    '#description' => 'This list let\'s you turn on and off various tools, some of them load or execute at rather awkward times so you might find it useful to turn them on or off. ',
+    '#type' => 'checkboxes',
+    '#options' => $active_tools_options,
+    '#default_value' => variable_get('underthehood_active_tools', array()),
+  );
   return system_settings_form($form);
 }
   
 //Some debugging css
 function underthehood_init(){
-    drupal_add_css( drupal_get_path( 'module', 'underthehood' ) . '/underthehood.css');
-    drupal_add_js( drupal_get_path( 'module', 'underthehood' ) . '/underthehood.js');
+  $underthehood_active_tools = variable_get('underthehood_active_tools', array());
+  drupal_add_css( drupal_get_path( 'module', 'underthehood' ) . '/underthehood.css');
+  drupal_add_js( drupal_get_path( 'module', 'underthehood' ) . '/underthehood.js');
+  if($underthehood_active_tools['watchdog_by_page'] == 'watchdog_by_page'){
+    drupal_add_js(array('underthehood' => array('InitStartTime' => time())), 'setting');
+  }
 }
 
 //hook block
 function underthehood_block($op = 'list', $delta = 0, $edit = array()) {
+  $underthehood_active_tools = variable_get('underthehood_active_tools', array());
   switch( $op ) {
     case 'list':
-      $blocks[0] = array(
-        'info' => t('PHP Server Variables'),
-        'weight' => -999,
-        'cache'  => BLOCK_NO_CACHE,
-      );
-      $blocks[1] = array(
-        'info' => t('Variable Editor'),
-        'weight' => -998,
-        'cache' => BLOCK_NO_CACHE,
-      );
-      $blocks[2] = array(
-        'info' => t('PHP Session Variables'),
-        'weight' => -997,
-        'cache' => BLOCK_NO_CACHE,
-      );
-      $blocks[3] = array(
-        'info' => t('Form POST Data Inspector'),
-        'weight' => -996,
-        'cache' => BLOCK_NO_CACHE,
-      );
+      if($underthehood_active_tools['server_vars'] == 'server_vars'){
+        $blocks[0] = array(
+          'info' => t('PHP Server Variables'),
+          'weight' => -999,
+          'cache'  => BLOCK_NO_CACHE,
+        );
+      }
+      if($underthehood_active_tools['drupal_vars'] == 'drupal_vars'){
+        $blocks[1] = array(
+          'info' => t('Variable Editor'),
+          'weight' => -998,
+          'cache' => BLOCK_NO_CACHE,
+        );
+      }
+      if($underthehood_active_tools['session_vars'] == 'session_vars'){
+        $blocks[2] = array(
+          'info' => t('PHP Session Variables'),
+          'weight' => -997,
+          'cache' => BLOCK_NO_CACHE,
+        );
+      }
+      if($underthehood_active_tools['form_hijacker'] == 'form_hijacker'){
+        $blocks[3] = array(
+          'info' => t('Form POST Data Inspector'),
+          'weight' => -996,
+          'cache' => BLOCK_NO_CACHE,
+        );
+      }
+      if($underthehood_active_tools['watchdog_by_page'] == 'watchdog_by_page'){
+        $blocks[4] = array(
+          'info' => t('Watchdog Messages per Page'),
+          'weight' => -995,
+          'cache' => BLOCK_NO_CACHE,
+        );
+      }
       return $blocks;
     case 'view':
       switch( $delta ) {
@@ -91,8 +132,60 @@ function underthehood_block($op = 'list', $delta = 0, $edit = array()) {
             'content' => '<button id="gotcha-button" class="debugging button">GOTCHA</button>',
           );
           return $block;
+        case '4':
+          $block = array(  
+            'subject' => t('Watchdog Messages for this Page'),
+            'content' => watchdog_by_page(),
+          );
+          return $block;
       }
   }
+}
+
+// Show the watchdog messages that occured during this page load
+// $("#watchdog-by-page-data").text("HOWDY");
+function watchdog_by_page(){
+  $watchdog_script = '
+  console.log(Drupal.settings.underthehood.InitStartTime);
+  $(document).ready( function(){
+    $.ajax(
+      {
+        type : "POST",
+        url : "admin/grab-watchdog?InitStartTime=" + Drupal.settings.underthehood.InitStartTime,
+        success: function(data){
+          $("#watchdog-by-page-data").html(data);
+        }
+      }
+    );
+  });
+  ';
+  drupal_add_js($watchdog_script, 'inline', 'footer');
+  $output = '<div id="watchdog-by-page-data" class="debugging"></div>';
+  return $output;
+}
+
+function grab_current_watchdog(){
+  if(!empty($_GET['InitStartTime'])){
+    //$InitStartTime = filter_input(FILTER_SANITIZE_STRING, $_GET['InitStartTime']);
+    $InitStartTime = $_GET['InitStartTime'];
+  }
+  if(!empty($_POST['InitStartTime'])){
+    //$InitStartTime = filter_input(FILTER_SANITIZE_STRING, $_POST['InitStartTime']);
+    $InitStartTime = $_POST['InitStartTime'];
+  }
+  if(empty($_GET['InitStartTime']) && empty($_POST['InitStartTime'])){
+    print(random_error_message('empty'));
+    exit();
+  }
+  $sql = 'SELECT timestamp,type,message,variables from {watchdog} WHERE timestamp >= %d';
+  $query_object = db_query($sql, $InitStartTime);
+  $output = '<br><div class="watchdog-debugging-header type">Type</div><div class="watchdog-debugging-header message">Message</div><div id="watchdog-debugging-header-line"></div>';
+  while($data = db_fetch_array($query_object)){
+    $message = t($data['message'], unserialize($data['variables']));
+    $output .= '<div class="data-row type">' . $data['type'] . '</div><div class="data-row message">' . $message . '</div><br>';
+  }
+  print($output);
+  exit();
 }
 
 /**
@@ -102,46 +195,81 @@ function underthehood_block($op = 'list', $delta = 0, $edit = array()) {
  * forms over to Drupal forms API forms easier for you.
  */ 
 function show_me_the_form_post(){
-  (!empty($_POST)) ? $output = prettify_array($_POST) : $output = '<div class="debugging">So sorry, no POST data today.</div>';
+  (!empty($_POST)) ? $output = prettify_data($_POST) : $output = random_error_message('empty');
   return $output;
 }
 
 //The PHP session data nicely formatted for easy reading
 function formatted_session_data(){
-  (!empty($_SESSION)) ? $output = prettify_array($_SESSION): $output = '<div class="debugging">So sorry, no POST data today.</div>';
+  (!empty($_SESSION)) ? $output = prettify_data($_SESSION): $output = random_error_message('empty');
   return $output;
 }
+
 //PHP server variables
 function grab_php_server_variables(){
-  $output = prettify_array($_SERVER);
+  $output = prettify_data($_SERVER);
   return $output;
 }
 
 //Prettify's the array
-function prettify_array($array = array()){
+function prettify_data($data){
+  if(!is_array($data) && !is_object($data)){
+    $output .= random_error_message('type');
+  }
   $output = '<div class="debugging">';
-  foreach($array as $key => $value){
-    if(is_array($value)){
-      foreach($value as $sub_key => $sub_value){
-        if(is_array($sub_value)){
-          foreach($sub_value as $sub_sub_key => $sub_sub_value){
-            if(is_array($sub_sub_value)){
-              $output .= serialize($sub_sub_value);
-            } else {
-              $output .= '<div class="debugging-key">[' . $key . '][' . $sub_key . '][' . $sub_sub_key . ']</div> => ' . $sub_sub_value . '<br>';
+  if(is_array($data)){
+    foreach($data as $key => $value){
+      if(is_array($value) || is_object($value) ) {
+        foreach($value as $sub_key => $sub_value){
+          if(is_array($sub_value) || is_object($sub_value)){
+            foreach($sub_value as $sub_sub_key => $sub_sub_value){
+              if(is_array($sub_sub_value) || is_object($sub_sub_value)){
+                $output .= serialize($sub_sub_value);
+              } else {
+                $output .= '<div class="debugging-key">[' . $key . '][' . $sub_key . '][' . $sub_sub_key . ']</div> => ' . $sub_sub_value . '<br>';
+              }
             }
+          } else {
+            $output .= '<div class="debugging-key">[' . $key . '][' . $sub_key . ']</div> => ' . $sub_value . '<br>';
           }
-        } else {
-          $output .= '<div class="debugging-key">[' . $key . '][' . $sub_key . ']</div> => ' . $sub_value . '<br>';
         }
+      } else {
+        $output .= '<div class="debugging-key">[' . $key . ']</div> => ' . $value . '<br>';
       }
-    } else {
-      $output .= '<div class="debugging-key">[' . $key . ']</div> => ' . $value . '<br>';
+    }
+  }
+  if(is_object($data)){
+    foreach($data as $key => $value){
+      if(is_array($value) || is_object($value) ) {
+        foreach($value as $sub_key => $sub_value){
+          if(is_array($sub_value) || is_object($sub_value)){
+            foreach($sub_value as $sub_sub_key => $sub_sub_value){
+              if(is_array($sub_sub_value) || is_object($sub_sub_value)){
+                foreach($sub_sub_value as $sub_sub_sub_key => $sub_sub_sub_value){
+                  if(is_array($sub_sub_sub_value) || is_object($sub_sub_sub_value)){
+                    $output .= '<div class="debugging-object">' . $key . ' -> ' . $sub_key . ' -> ' . $sub_sub_key . ' -> ' . $sub_sub_sub_key . '</div> -> <div class="debugging-property">' . serialize($sub_sub_sub_value) . '</div><br>';
+                  } else {
+                    $output .= '<div class="debugging-object">' . $key . ' -> ' . $sub_key . ' -> ' . $sub_sub_key . ' -> ' . $sub_sub_sub_key . '</div> -> <div class="debugging-property">' . $sub_sub_sub_value . '</div><br>';
+                  }
+                }
+                //$output .= serialize($sub_sub_value);
+              } else {
+                $output .= '<div class="debugging-object">' . $key . ' -> ' . $sub_key . ' -> ' . $sub_sub_key . '</div> -> <div class="debugging-property">' . $sub_sub_value . '</div><br>';
+              }
+            }
+          } else {
+            $output .= '<div class="debugging-object">' . $key . ' -> ' . $sub_key . '</div> -> <div class="debugging-property">' . $sub_value . '</div><br>';
+          }
+        }
+      } else {
+        $output .= '<div class="debugging-object">' . $key . '</div> -> <div class="debugging-property">' . $value . '</div><br>';
+      }
     }
   }
   $output .= '</div>';
   return $output;
 }
+
 
 //A simple form generator that turns the entire variables table into a form
 function variable_editor_form(){
@@ -176,7 +304,29 @@ function variable_editor_form_submit($form, &$form_state){
   }
 }
 
-
+//Just to keep your mood up.
+function random_error_message($op){
+  
+  switch($op){
+    case 'empty':
+      $dice_roll = rand(0,3);
+      $empty_messages = array(
+        '<div class="debugging">So sorry, no POST data today.</div>',
+        '<div class="debugging">I thought it was around here somewhere...</div>',
+        '<div class="debugging">Magic eight ball says "Outlook Cloudy".</div>',
+        '<div class="debugging">Maybe if I stop freebasing bleach I\'ll be able to find stuff around here.</div>',
+      );
+      return($empty_messages[$dice_roll]);
+    case 'type':
+      $dice_roll = rand(0,2);
+      $empty_messages = array(
+        '<div class="debugging">This things is not what you think it is.</div>',
+        '<div class="debugging">I concur that water is not wet.</div>',
+        '<div class="debugging">Turkeys do not echo locate.</div>',
+      );
+      return($empty_messages[$dice_roll]);
+  }
+}
 
 /**
  * Content diff
@@ -194,5 +344,42 @@ function drupal_node_diff($node_original, $node_target){
     return FALSE;
   } else {
     return TRUE;
+  }
+}
+
+/**
+ * Some useful views stuff in the works
+ */
+function view_explorer($op = 'list', $view_name, $view_display, $arguments = array()){
+  switch($op){
+    case 'view':
+      $data = views_get_view($view_name);
+      $output = prettify_data($data);
+      return $output;
+    case 'list':
+      $output = prettify_data(views_get_all_views());
+      return $output;
+    case 'embed':
+      $data = views_embed_view($view_name, $view_display);
+      $output = prettify_data($data);
+      return $output;
+    case 'dissect':  //Bah!  This is a pain in the ass.  Can't get the display to change
+      $view_object = views_get_view($view_name, TRUE);
+      $view_object->choose_display(array($view_display));
+      (empty($view_object->current_display)) ? $output .= 'EMPTY<br><br>' : $output .= serialize($view_object->current_display);
+      $view_object->init_display(array($view_display));
+      $view_object->set_display(array($view_display));
+      $view_object->build($view_display);
+      //$view_object->current_display = $view_display;
+      (empty($view_object->current_display)) ? $output .= 'EMPTY<br><br>' : $output .= serialize($view_object->current_display);
+      $view_object->execute_display($view_display, array());      
+      //$view_object->execute(array($view_display));
+      //$output = prettify_data($view_object);
+      $data = $view_object->result;
+      $output .= prettify_data($data);
+      return $output;
+    case 'list_displays':
+      $view_object = views_get_view($view_name);
+      return $view_object;
   }
 }
