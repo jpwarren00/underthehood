@@ -12,18 +12,19 @@ function underthehood_menu(){
     'description' => 'An admin thingy',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('underthehood_admin_form'),
+    'access callback' => 'user_access',
     'access arguments' => array('administer underthehood'),
     'type' => MENU_NORMAL_ITEM,
   );
   $items['admin/gotcha'] = array(
     'title' => t('Your form data'),
     'page callback' => 'show_me_the_form_post',
-    'access arguments' => TRUE,
+    'access callback' => TRUE,
     'type' => MENU_NORMAL_ITEM,
   );
   $items['admin/grab-watchdog'] = array(
     'page callback' => 'grab_current_watchdog',
-    'access arguments' => TRUE,
+    'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
   //$items['admin/settings/underthehood/alternate_db_setup'] = array();
