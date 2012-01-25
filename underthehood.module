@@ -50,14 +50,14 @@ function underthehood_admin_form(){
     '#description' => 'This list let\'s you turn on and off various tools, some of them load or execute at rather awkward times so you might find it useful to turn them on or off. ',
     '#type' => 'checkboxes',
     '#options' => $active_tools_options,
-    '#default_value' => variable_get('underthehood_active_tools', array()),
+    '#default_value' => variable_get('underthehood_active_tools', array('server_vars' => '', 'drupal_vars' => '', 'session_vars' => '', 'form_hijacker' => '','watchdog_by_page' => '',)),
   );
   return system_settings_form($form);
 }
   
 //Some debugging css
 function underthehood_init(){
-  $underthehood_active_tools = variable_get('underthehood_active_tools', array());
+  $underthehood_active_tools = variable_get('underthehood_active_tools', array('server_vars' => '', 'drupal_vars' => '', 'session_vars' => '', 'form_hijacker' => '','watchdog_by_page' => '',));
   drupal_add_css( drupal_get_path( 'module', 'underthehood' ) . '/underthehood.css');
   drupal_add_js( drupal_get_path( 'module', 'underthehood' ) . '/underthehood.js');
   if($underthehood_active_tools['watchdog_by_page'] == 'watchdog_by_page'){
@@ -67,7 +67,7 @@ function underthehood_init(){
 
 //hook block
 function underthehood_block($op = 'list', $delta = 0, $edit = array()) {
-  $underthehood_active_tools = variable_get('underthehood_active_tools', array());
+  $underthehood_active_tools = variable_get('underthehood_active_tools', array('server_vars' => '', 'drupal_vars' => '', 'session_vars' => '', 'form_hijacker' => '','watchdog_by_page' => '',));
   switch( $op ) {
     case 'list':
       if($underthehood_active_tools['server_vars'] == 'server_vars'){
