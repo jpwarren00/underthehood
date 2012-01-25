@@ -1,5 +1,5 @@
-$(document).ready( function(){
-  $('#gotcha-button').click( function(event){
-    $('form').attr("action", "admin/gotcha");
+jQuery(document).ready( function(){
+  jQuery('#gotcha-button').click( function(event){
+    jQuery('form').attr("action", "admin/gotcha");
   });
 });
