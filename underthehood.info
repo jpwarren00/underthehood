@@ -1,4 +1,5 @@
 ;$Id$
 name = "Under The Hood"
 description = "A module for exposing PHP and Drupal variables that are commonly needed in development"
-core = 7.x 
+core = 7.x
+configure = admin/config/underthehood
